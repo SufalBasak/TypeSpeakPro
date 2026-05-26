@@ -69,7 +69,7 @@ const Practice = () => {
             )}
 
             {/* Navbar for Mode Selection Screen Only */}
-            {selectedMode === null && <Navbar />}
+            {selectedMode === null && <Navbar forceOpaque={true} />}
 
             {/* Subtle Animated Background */}
             <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">

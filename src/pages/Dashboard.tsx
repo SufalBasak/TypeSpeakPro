@@ -152,7 +152,7 @@ const Dashboard = () => {
 
     return (
         <div className="min-h-screen bg-background text-foreground font-sans fade-in selection:bg-teal-500/30">
-            <Navbar />
+            <Navbar forceOpaque={true} />
             <div className="max-w-7xl mx-auto space-y-8 p-6 md:p-12 pt-24 mt-16">
                 <InlineError error={dashboardAction.error} onRetry={dashboardAction.retry} />
 

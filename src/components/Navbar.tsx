@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Menu, X, Keyboard, Mic, LogOut, User } from 'lucide-react';
-import UserAvatar from '@/components/UserAvatar';
+import { Menu, X, LogOut, User, Sun, Moon } from 'lucide-react';
 import LoginModal from "@/components/auth/LoginModal";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation, NavLink } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import {
   DropdownMenu,
@@ -13,11 +12,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
 import ComingSoonModal from "@/components/modals/ComingSoonModal";
-import { Sun, Moon } from "lucide-react";
 import { useTheme } from "@/context/ThemeContext";
-
 import FutureInnovationModal from "@/components/modals/FutureInnovationModal";
 
 interface NavbarProps {
@@ -30,8 +26,9 @@ const Navbar = ({ forceOpaque = false }: NavbarProps) => {
   const [isComingSoonOpen, setIsComingSoonOpen] = useState(false);
   const [isFutureModalOpen, setIsFutureModalOpen] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, isAuthenticated, logout, isLoginModalOpen, openLoginModal, closeLoginModal } = useAuth();
-const { theme, toggleTheme } = useTheme();
+  const { theme, toggleTheme } = useTheme();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -63,7 +60,6 @@ const { theme, toggleTheme } = useTheme();
       openLoginModal();
       setIsMobileMenuOpen(false);
     } else {
-      // Normal link behavior
       setIsMobileMenuOpen(false);
     }
   };
@@ -75,10 +71,13 @@ const { theme, toggleTheme } = useTheme();
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled || forceOpaque ? 'glass-strong py-3' : 'bg-transparent py-5'
-        }`}
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+        isScrolled || forceOpaque
+          ? 'glass-strong py-3 shadow-[0_4px_30px_rgba(0,0,0,0.3)]'
+          : 'bg-transparent py-5'
+      }`}
     >
-      <nav className="container mx-auto px-4 flex items-center justify-between">
+      <nav className="container mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
         {/* Logo */}
         <a href="/" className="flex items-center gap-2 group">
           <img
@@ -89,41 +88,61 @@ const { theme, toggleTheme } = useTheme();
         </a>
 
         {/* Desktop Navigation */}
-        <div className="hidden lg:flex items-center gap-8">
-          {navLinks.map((link) => (
-            <a
-              key={link.href}
-              href={link.href}
-              className={`transition-colors text-sm font-medium ${link.isFuture ? 'text-purple-400 hover:text-purple-300 font-bold glow-text' : 'text-muted-foreground hover:text-foreground'}`}
-              onClick={(e) => handleNavClick(e, link)}
-            >
-              {link.label}
-            </a>
-          ))}
+        <div className="hidden lg:flex items-center gap-1">
+          {navLinks.map((link) => {
+            if (link.isFuture) {
+              return (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  className="relative px-4 py-2 rounded-lg text-sm font-medium text-purple-400 hover:text-purple-300 transition-all duration-200 glow-text"
+                  onClick={(e) => handleNavClick(e, link)}
+                >
+                  {link.label}
+                </a>
+              );
+            }
+            return (
+              <NavLink
+                key={link.href}
+                to={link.href}
+                className={({ isActive }) =>
+                  `relative px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    isActive
+                      ? 'text-primary bg-primary/10'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                  }`
+                }
+                onClick={(e: React.MouseEvent<HTMLAnchorElement>) => handleNavClick(e, link)}
+              >
+                {link.label}
+              </NavLink>
+            );
+          })}
         </div>
 
         {/* Desktop Actions */}
-        <div className="hidden lg:flex items-center gap-3">
+        <div className="hidden lg:flex items-center gap-2">
           <button
             onClick={toggleTheme}
-            className="p-2 rounded-full border border-white/10 hover:bg-white/10 transition-colors"
+            className="p-2.5 rounded-xl border border-border bg-card/50 hover:bg-card hover:border-primary/30 transition-all duration-200"
             aria-label="Toggle theme"
           >
             {theme === 'dark' ? (
-              <Sun className="w-5 h-5 text-yellow-400" />
+              <Sun className="w-4 h-4 text-yellow-400 transition-transform duration-200 hover:rotate-45" />
             ) : (
-              <Moon className="w-5 h-5 text-purple-400" />
+              <Moon className="w-4 h-4 text-purple-400 transition-transform duration-200 hover:-rotate-12" />
             )}
           </button>
           {isAuthenticated ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="relative h-10 w-10 rounded-full overflow-hidden focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 focus:ring-offset-neutral-900 transition-all hover:opacity-80 ring-2 ring-white/10">
+                <button className="relative h-9 w-9 rounded-full overflow-hidden focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background transition-all duration-200 hover:opacity-80 ring-2 ring-border">
                   {user?.picture ? (
                     <img src={user.picture} alt={user.name} className="h-full w-full object-cover" />
                   ) : (
-                    <div className="h-full w-full bg-gradient-to-br from-teal-500 to-purple-600 flex items-center justify-center text-white font-medium">
-                      {user?.name?.charAt(0).toUpperCase() || <User className="h-5 w-5" />}
+                    <div className="h-full w-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-primary-foreground font-medium text-sm">
+                      {user?.name?.charAt(0).toUpperCase() || <User className="h-4 w-4" />}
                     </div>
                   )}
                 </button>
@@ -149,75 +168,119 @@ const { theme, toggleTheme } = useTheme();
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <>
-              <Button variant="default" size="sm" onClick={openLoginModal}>
-                Sign In
-              </Button>
-            </>
+            <Button variant="default" size="sm" onClick={openLoginModal}>
+              Sign In
+            </Button>
           )}
         </div>
 
         {/* Mobile Menu Button */}
         <button
-          className="lg:hidden text-foreground p-2"
+          className="lg:hidden text-foreground p-2 hover:bg-muted/50 rounded-lg transition-colors"
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           aria-label="Toggle menu"
         >
-          {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </button>
       </nav>
 
       {/* Mobile Menu */}
       {isMobileMenuOpen && (
-        <div className="lg:hidden glass-strong bg-card/95 mt-2 mx-4 rounded-xl p-4 animate-fade-in">
-          <div className="flex flex-col gap-3">
-            {isAuthenticated && (
-              <>
-                <div className="flex flex-col space-y-1 px-1">
-                  <p className="text-sm font-medium leading-none text-foreground">{user?.name}</p>
-                  <p className="text-xs leading-none text-muted-foreground">{user?.email}</p>
-                </div>
-                <hr className="border-border my-2" />
-              </>
-            )}
-            {navLinks.map((link) => (
-              <a
-                key={link.href}
-                href={link.href}
-                className={`transition-colors py-2 text-sm font-medium ${link.isFuture ? 'text-purple-400 font-bold' : 'text-foreground hover:text-primary'}`}
-                onClick={(e) => handleNavClick(e, link)}
-              >
-                {link.label}
-              </a>
-            ))}
-            <hr className="border-border my-2" />
-            <div className="pt-2 flex flex-col gap-3">
-              {isAuthenticated ? (
+        <>
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 lg:hidden" onClick={() => setIsMobileMenuOpen(false)} />
+          <div className="relative lg:hidden glass-strong bg-card/95 mt-2 mx-4 rounded-xl p-4 animate-fade-in z-50 shadow-2xl border border-border/80">
+            <div className="flex flex-col gap-2">
+              {isAuthenticated && (
                 <>
-                  <Button className="w-full" variant="outline" onClick={() => {
-                    navigate("/dashboard");
-                    setIsMobileMenuOpen(false);
-                  }}>
-                    My Dashboard
-                  </Button>
-                  <Button className="w-full" variant="destructive" onClick={() => {
-                    handleLogout();
-                    setIsMobileMenuOpen(false);
-                  }}>
-                    Log out
-                  </Button>
+                  <div className="flex items-center gap-3 px-2 py-2">
+                    <div className="relative h-10 w-10 rounded-full overflow-hidden ring-2 ring-border flex-shrink-0">
+                      {user?.picture ? (
+                        <img src={user.picture} alt={user.name} className="h-full w-full object-cover" />
+                      ) : (
+                        <div className="h-full w-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-primary-foreground font-medium">
+                          {user?.name?.charAt(0).toUpperCase() || <User className="h-5 w-5" />}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex flex-col">
+                      <p className="text-sm font-medium text-foreground">{user?.name}</p>
+                      <p className="text-xs text-muted-foreground">{user?.email}</p>
+                    </div>
+                  </div>
+                  <hr className="border-border/60 my-1" />
                 </>
-              ) : (
-                <Button className="w-full" onClick={() => {
-                  setIsMobileMenuOpen(false);
-                  openLoginModal();
-                }}>
-                  Login
-                </Button>
               )}
+              {navLinks.map((link) => {
+                if (link.isFuture) {
+                  return (
+                    <a
+                      key={link.href}
+                      href={link.href}
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-purple-400 hover:bg-purple-500/10 transition-colors"
+                      onClick={(e) => handleNavClick(e, link)}
+                    >
+                      {link.label}
+                    </a>
+                  );
+                }
+                const isActive = location.pathname === link.href;
+                return (
+                  <a
+                    key={link.href}
+                    href={link.href}
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                      isActive
+                        ? 'text-primary bg-primary/10'
+                        : 'text-foreground hover:bg-muted/50'
+                    }`}
+                    onClick={(e) => handleNavClick(e, link)}
+                  >
+                    {link.label}
+                  </a>
+                );
+              })}
+              <hr className="border-border/60 my-1" />
+              <div className="pt-1 flex flex-col gap-2">
+                {isAuthenticated ? (
+                  <>
+                    <Button className="w-full" variant="outline" onClick={() => {
+                      navigate("/dashboard");
+                      setIsMobileMenuOpen(false);
+                    }}>
+                      My Dashboard
+                    </Button>
+                    <Button className="w-full" variant="destructive" onClick={() => {
+                      handleLogout();
+                      setIsMobileMenuOpen(false);
+                    }}>
+                      Log out
+                    </Button>
+                  </>
+                ) : (
+                  <Button className="w-full" onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    openLoginModal();
+                  }}>
+                    Login
+                  </Button>
+                )}
+              </div>
+              <div className="mt-2 flex items-center justify-between px-3 py-2 rounded-lg bg-muted/30">
+                <span className="text-xs text-muted-foreground">Theme</span>
+                <button
+                  onClick={toggleTheme}
+                  className="p-1.5 rounded-lg hover:bg-muted transition-colors"
+                >
+                  {theme === 'dark' ? (
+                    <Sun className="w-4 h-4 text-yellow-400" />
+                  ) : (
+                    <Moon className="w-4 h-4 text-purple-400" />
+                  )}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        </>
       )}
       <LoginModal isOpen={isLoginModalOpen} onClose={closeLoginModal} />
       <ComingSoonModal isOpen={isComingSoonOpen} onClose={() => setIsComingSoonOpen(false)} />
