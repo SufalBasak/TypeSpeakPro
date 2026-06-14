@@ -515,15 +515,19 @@ const TypingTest = ({ onComplete, initialMultiplayer = false, aiMode = false, in
 
     // Render text with specific coloring
     const renderText = () => {
-        if (!targetText) return null; // Prevent crash if undefined
-        return targetText.split('').map((char, index) => {
-            // Colors: Untyped = very muted, Typed Correct = bright, Error = red
+        if (!targetText) return null;
+
+        const result: JSX.Element[] = [];
+        let wordBuffer: JSX.Element[] = [];
+
+        targetText.split('').forEach((char, index) => {
             let className =
                 theme === "neon"
                     ? 'text-cyan-400 transition-colors duration-200'
                     : theme === "minimal"
                         ? 'text-gray-400 transition-colors duration-200'
                         : 'text-green-400 transition-colors duration-200';
+            
             if (index < userInput.length) {
                 const isCorrect = char === userInput[index];
                 className = isCorrect
@@ -537,7 +541,7 @@ const TypingTest = ({ onComplete, initialMultiplayer = false, aiMode = false, in
 
             const isCurrent = index === activeCharIndex;
 
-            return (
+            const charSpan = (
                 <span
                     key={index}
                     ref={isCurrent ? activeCharRef : null}
@@ -549,7 +553,31 @@ const TypingTest = ({ onComplete, initialMultiplayer = false, aiMode = false, in
                     {char}
                 </span>
             );
+
+            if (char === ' ') {
+                if (wordBuffer.length > 0) {
+                    result.push(
+                        <span key={`word-${index - wordBuffer.length}`} className="inline-block whitespace-nowrap">
+                            {wordBuffer}
+                        </span>
+                    );
+                    wordBuffer = [];
+                }
+                result.push(charSpan);
+            } else {
+                wordBuffer.push(charSpan);
+            }
         });
+
+        if (wordBuffer.length > 0) {
+            result.push(
+                <span key="word-last" className="inline-block whitespace-nowrap">
+                    {wordBuffer}
+                </span>
+            );
+        }
+
+        return result;
     };
 
     return (
@@ -775,7 +803,7 @@ const TypingTest = ({ onComplete, initialMultiplayer = false, aiMode = false, in
             >
                 {/* Text Display - RESTORED */}
                 <div
-                    className="relative z-10 break-words pointer-events-none select-none w-full whitespace-pre-wrap tracking-wide"
+                    className="relative z-10 pointer-events-none select-none w-full whitespace-pre-wrap tracking-wide"
                     style={{ wordSpacing: '0.1em' }}
                 >
                     {renderText()}
