@@ -39,7 +39,7 @@ const MultiplayerResults = ({ open, onOpenChange, multiplayer, onRestart, result
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-md bg-[#0f172a] border-white/10 p-0 overflow-hidden">
+            <DialogContent className="dark sm:max-w-md bg-[#0f172a] border-white/10 p-0 overflow-hidden">
                 <div className="relative p-6 bg-gradient-to-b from-primary/10 to-transparent text-center">
                     <DialogHeader>
                         <div className="mx-auto mb-4 relative">

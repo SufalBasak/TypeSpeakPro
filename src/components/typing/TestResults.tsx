@@ -180,7 +180,7 @@ const TestResults = ({ open, onOpenChange, stats, onRestart }: TestResultsProps)
                 {/* Captured Report Area */}
                 <div
                     ref={reportRef}
-                    className="relative w-full bg-[#0f172a] border border-white/10 rounded-2xl p-6 md:p-8 shadow-2xl overflow-hidden"
+                    className="dark relative w-full bg-[#0f172a] border border-white/10 rounded-2xl p-6 md:p-8 shadow-2xl overflow-hidden"
                 >
                     {/* Backgrounds */}
                     <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
