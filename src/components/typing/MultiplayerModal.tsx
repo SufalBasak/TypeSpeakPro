@@ -124,7 +124,7 @@ const MultiplayerModal = ({ open, onOpenChange, multiplayer }: MultiplayerModalP
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-md bg-[#0f172a] border-white/10 p-0 overflow-hidden gap-0">
+            <DialogContent className="dark sm:max-w-md bg-[#0f172a] border-white/10 p-0 overflow-hidden gap-0">
                 {/* Header Section with Gradient */}
                 <div className="relative p-6 bg-gradient-to-b from-primary/10 to-transparent">
                     <DialogHeader className="relative z-10">
