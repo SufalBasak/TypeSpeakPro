@@ -78,20 +78,20 @@ const KeyHeatmap = ({ keystrokeData }: { keystrokeData: { key: string; latency: 
     if (keystrokeData.length < 5) return null;
 
     return (
-        <div className="mt-6 bg-secondary/10 rounded-2xl border border-white/5 p-4 md:p-6">
-            <h3 className="text-xs font-medium text-muted-foreground mb-4 flex items-center gap-2">
+        <div className="mt-3 bg-secondary/10 rounded-2xl border border-white/5 p-2.5 md:p-3">
+            <h3 className="text-xs font-medium text-muted-foreground mb-3 flex items-center gap-2">
                 <span className="w-1.5 h-1.5 rounded-full bg-yellow-400"></span>
                 Keystroke Heatmap
             </h3>
-            <div className="flex flex-col items-center gap-1.5 mb-4">
+            <div className="flex flex-col items-center gap-1 mb-2">
                 {KEYBOARD_ROWS.map((row, ri) => (
-                    <div key={ri} className="flex gap-1.5" style={{ marginLeft: ri === 1 ? '0.75rem' : ri === 2 ? '1.5rem' : 0 }}>
+                    <div key={ri} className="flex gap-1" style={{ marginLeft: ri === 1 ? '0.75rem' : ri === 2 ? '1.5rem' : 0 }}>
                         {row.map(key => (
                             <div
                                 key={key}
                                 title={keyStats[key] ? `avg ${Math.round(keyStats[key].total / keyStats[key].count)}ms` : 'no data'}
                                 className={cn(
-                                    'w-8 h-8 rounded-md border flex items-center justify-center text-xs font-mono font-bold transition-all',
+                                    'w-6 h-6 rounded-md border flex items-center justify-center text-xs font-mono font-bold transition-all',
                                     getColor(key)
                                 )}
                             >
@@ -145,6 +145,18 @@ const TestResults = ({ open, onOpenChange, stats, onRestart }: TestResultsProps)
     const { user } = useAuth();
     const reportRef = useRef<HTMLDivElement>(null);
 
+    const speedStats = useMemo(() => {
+        const wpms = (stats.history ?? []).map((d) => d.wpm);
+        if (wpms.length === 0) return { avg: 0, peak: 0, consistency: 0 };
+        const mean = wpms.reduce((a, b) => a + b, 0) / wpms.length;
+        const sd = Math.sqrt(wpms.reduce((s, w) => s + (w - mean) ** 2, 0) / wpms.length);
+        return {
+            avg: Math.round(mean),
+            peak: Math.max(...wpms),
+            consistency: Math.max(0, Math.round((1 - sd / mean) * 100)),
+        };
+    }, [stats.history]);
+
     const handleScreenshot = async () => {
         if (reportRef.current) {
             try {
@@ -172,136 +184,153 @@ const TestResults = ({ open, onOpenChange, stats, onRestart }: TestResultsProps)
         const url = 'https://typespeakpro.com';
         window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}&summary=${encodeURIComponent(text)}`, '_blank');
     };
-
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-4xl p-0 gap-0 border-none bg-transparent shadow-none sm:rounded-2xl max-h-[90vh] overflow-y-auto overflow-x-hidden scrollbar-hide">
+            <DialogContent className="max-w-4xl p-0 gap-0 border-none bg-transparent shadow-none sm:rounded-2xl max-h-[90vh] flex flex-col overflow-hidden">
 
-                {/* Captured Report Area */}
-                <div
-                    ref={reportRef}
-                    className="relative w-full bg-[#0f172a] border border-white/10 rounded-2xl p-6 md:p-8 shadow-2xl overflow-hidden"
-                >
-                    {/* Backgrounds */}
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
-                    <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-500/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2 pointer-events-none"></div>
+                {/* Scrollable content area — only scrolls if the screen is too short */}
+                <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden scrollbar-hide">
+                    {/* Captured Report Area */}
+                    <div
+                        ref={reportRef}
+                        className="relative w-full bg-[#0f172a] border border-white/10 rounded-2xl p-4 md:p-5 shadow-2xl overflow-hidden"
+                    >
+                        {/* Backgrounds */}
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
+                        <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-500/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2 pointer-events-none"></div>
 
-                    {/* Header */}
-                    <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 border-b border-white/5 pb-6 relative z-10 gap-4">
-                        <div className="space-y-1">
-                            <h2 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-400">
-                                TypeSpeakPro
-                            </h2>
-                            <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Performance Certified</p>
-                        </div>
-                        <div className="flex items-center gap-4 self-end md:self-auto">
-                            <div className="text-right">
-                                <p className="font-medium text-foreground text-sm md:text-lg">{user?.name || 'Guest Agent'}</p>
-                                <p className="text-[10px] md:text-xs text-muted-foreground font-mono">{new Date().toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                        {/* Header */}
+                        <div className="flex flex-col md:flex-row md:items-center justify-between mb-4 border-b border-white/5 pb-4 relative z-10 gap-4">
+                            <div className="space-y-1">
+                                <h2 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-400">
+                                    TypeSpeakPro
+                                </h2>
+                                <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Performance Certified</p>
                             </div>
-                            {user?.picture ? (
-                                <img src={user.picture} alt="User" className="w-10 h-10 md:w-12 md:h-12 rounded-full border-2 border-primary/20 shadow-lg object-cover" />
-                            ) : (
-                                <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-secondary flex items-center justify-center border border-white/10">
-                                    <span className="text-lg font-bold text-muted-foreground">?</span>
+                            <div className="flex items-center gap-4 self-end md:self-auto">
+                                <div className="text-right">
+                                    <p className="font-medium text-foreground text-sm md:text-lg">{user?.name || 'Guest Agent'}</p>
+                                    <p className="text-[10px] md:text-xs text-muted-foreground font-mono">{new Date().toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
                                 </div>
-                            )}
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-12 gap-6 relative z-10">
-                        {/* Stats Column */}
-                        <div className="md:col-span-4 space-y-4">
-                            <div className="bg-secondary/20 p-5 rounded-2xl border border-white/5 relative overflow-hidden group">
-                                <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                                <p className="text-muted-foreground text-[10px] uppercase tracking-widest font-bold mb-1">Typing Speed</p>
-                                <div className="flex items-baseline gap-2">
-                                    <p className="text-5xl md:text-6xl font-mono font-bold text-foreground">{stats.wpm}</p>
-                                    <span className="text-lg md:text-xl text-primary font-medium">WPM</span>
-                                </div>
-                            </div>
-
-                            <div className="bg-secondary/20 p-5 rounded-2xl border border-white/5">
-                                <p className="text-muted-foreground text-[10px] uppercase tracking-widest font-bold mb-1">Accuracy</p>
-                                <p className={cn("text-4xl md:text-5xl font-mono font-bold", stats.accuracy >= 95 ? "text-green-400" : "text-yellow-400")}>
-                                    {stats.accuracy}%
-                                </p>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="bg-secondary/20 p-4 rounded-xl border border-white/5">
-                                    <p className="text-muted-foreground text-[9px] uppercase tracking-wider mb-1">Time</p>
-                                    <p className="text-xl md:text-2xl font-mono font-bold text-foreground">{stats.time}s</p>
-                                </div>
-                                <div className="bg-secondary/20 p-4 rounded-xl border border-white/5">
-                                    <p className="text-muted-foreground text-[9px] uppercase tracking-wider mb-1">Errors</p>
-                                    <p className="text-xl md:text-2xl font-mono font-bold text-red-400">{stats.errorCount}</p>
-                                </div>
+                                {user?.picture ? (
+                                    <img src={user.picture} alt="User" className="w-10 h-10 md:w-12 md:h-12 rounded-full border-2 border-primary/20 shadow-lg object-cover" />
+                                ) : (
+                                    <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-secondary flex items-center justify-center border border-white/10">
+                                        <span className="text-lg font-bold text-muted-foreground">?</span>
+                                    </div>
+                                )}
                             </div>
                         </div>
 
-                        {/* Chart Column */}
-                        <div className="md:col-span-8 space-y-0">
-                            <div className="bg-secondary/10 rounded-2xl border border-white/5 p-4 md:p-6 flex flex-col">
-                                <h3 className="text-xs font-medium text-muted-foreground mb-4 flex items-center gap-2">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-primary"></span>
-                                    Speed Analysis (WPM)
-                                </h3>
-                                <div className="flex-1 min-h-[200px] w-full">
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <AreaChart data={stats.history} margin={{ top: 5, right: 0, left: -20, bottom: 0 }}>
-                                            <defs>
-                                                <linearGradient id="colorWpmModal" x1="0" y1="0" x2="0" y2="1">
-                                                    <stop offset="5%" stopColor="#2dd4bf" stopOpacity={0.4} />
-                                                    <stop offset="95%" stopColor="#2dd4bf" stopOpacity={0} />
-                                                </linearGradient>
-                                            </defs>
-                                            <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.3} vertical={false} />
-                                            <XAxis
-                                                dataKey="time"
-                                                stroke="#475569"
-                                                tick={{ fill: '#94a3b8', fontSize: 10 }}
-                                                tickFormatter={(val) => `${val}s`}
-                                                tickLine={false}
-                                                axisLine={false}
-                                                dy={5}
-                                            />
-                                            <YAxis
-                                                stroke="#475569"
-                                                tick={{ fill: '#94a3b8', fontSize: 10 }}
-                                                tickLine={false}
-                                                axisLine={false}
-                                                domain={['dataMin - 5', 'auto']}
-                                            />
-                                            <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(255,255,255,0.1)', strokeWidth: 1 }} />
-                                            <Area
-                                                type="monotone"
-                                                dataKey="wpm"
-                                                stroke="#2dd4bf"
-                                                strokeWidth={2}
-                                                fillOpacity={1}
-                                                fill="url(#colorWpmModal)"
-                                                animationDuration={1500}
-                                            />
-                                        </AreaChart>
-                                    </ResponsiveContainer>
+                        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 relative z-10">
+                            {/* Stats Column */}
+                            <div className="md:col-span-4 space-y-4">
+                                <div className="bg-secondary/20 p-5 rounded-2xl border border-white/5 relative overflow-hidden group">
+                                    <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                                    <p className="text-muted-foreground text-[10px] uppercase tracking-widest font-bold mb-1">Typing Speed</p>
+                                    <div className="flex items-baseline gap-2">
+                                        <p className="text-5xl md:text-6xl font-mono font-bold text-foreground">{stats.wpm}</p>
+                                        <span className="text-lg md:text-xl text-primary font-medium">WPM</span>
+                                    </div>
+                                </div>
+
+                                <div className="bg-secondary/20 p-5 rounded-2xl border border-white/5">
+                                    <p className="text-muted-foreground text-[10px] uppercase tracking-widest font-bold mb-1">Accuracy</p>
+                                    <p className={cn("text-4xl md:text-5xl font-mono font-bold", stats.accuracy >= 95 ? "text-green-400" : "text-yellow-400")}>
+                                        {stats.accuracy}%
+                                    </p>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="bg-secondary/20 p-4 rounded-xl border border-white/5">
+                                        <p className="text-muted-foreground text-[9px] uppercase tracking-wider mb-1">Time</p>
+                                        <p className="text-xl md:text-2xl font-mono font-bold text-foreground">{stats.time}s</p>
+                                    </div>
+                                    <div className="bg-secondary/20 p-4 rounded-xl border border-white/5">
+                                        <p className="text-muted-foreground text-[9px] uppercase tracking-wider mb-1">Errors</p>
+                                        <p className="text-xl md:text-2xl font-mono font-bold text-red-400">{stats.errorCount}</p>
+                                    </div>
                                 </div>
                             </div>
-                            <KeyHeatmap keystrokeData={stats.keystrokeData} />
-                        </div>
-                    </div>
 
-                    {/* Footer / Branding */}
-                    <div className="flex justify-between items-center pt-6 border-t border-white/5 relative z-10 mt-2">
-                        <div className="flex items-center gap-2 text-white/20">
-                            <span className="text-[10px] font-mono">ID: {Math.random().toString(36).substr(2, 9).toUpperCase()}</span>
+                            {/* Chart Column */}
+                            <div className="md:col-span-8 space-y-0">
+                                <div className="bg-secondary/10 rounded-2xl border border-white/5 p-3 md:p-4 flex flex-col">
+                                    <h3 className="text-xs font-medium text-muted-foreground mb-3 flex items-center gap-2">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-primary"></span>
+                                        Speed Analysis (WPM)
+                                    </h3>
+                                    <div className="flex-1 min-h-[140px] w-full">
+                                        {/* Chart Visuals */}
+                                        <ResponsiveContainer width="100%" height={150}>
+                                            <AreaChart data={stats.history} margin={{ top: 5, right: 0, left: -20, bottom: 0 }}>
+                                                <defs>
+                                                    <linearGradient id="colorWpmModal" x1="0" y1="0" x2="0" y2="1">
+                                                        <stop offset="5%" stopColor="#2dd4bf" stopOpacity={0.4} />
+                                                        <stop offset="95%" stopColor="#2dd4bf" stopOpacity={0} />
+                                                    </linearGradient>
+                                                </defs>
+                                                <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.3} vertical={false} />
+                                                <XAxis
+                                                    dataKey="time"
+                                                    stroke="#475569"
+                                                    tick={{ fill: '#94a3b8', fontSize: 10 }}
+                                                    tickFormatter={(val) => `${val}s`}
+                                                    tickLine={false}
+                                                    axisLine={false}
+                                                    dy={5}
+                                                />
+                                                <YAxis
+                                                    stroke="#475569"
+                                                    tick={{ fill: '#94a3b8', fontSize: 10 }}
+                                                    tickLine={false}
+                                                    axisLine={false}
+                                                    domain={['dataMin - 5', 'auto']}
+                                                />
+                                                <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(255,255,255,0.1)', strokeWidth: 1 }} />
+                                                <Area
+                                                    type="monotone"
+                                                    dataKey="wpm"
+                                                    stroke="#2dd4bf"
+                                                    strokeWidth={2}
+                                                    fillOpacity={1}
+                                                    fill="url(#colorWpmModal)"
+                                                    animationDuration={1500}
+                                                />
+                                            </AreaChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                    <div className="grid grid-cols-3 gap-3 mt-4">
+                                        <div className="bg-secondary/20 p-3 rounded-xl border border-white/5">
+                                            <p className="text-muted-foreground text-[9px] uppercase tracking-wider mb-1">Average</p>
+                                            <p className="text-xl md:text-2xl font-mono font-bold text-foreground">{speedStats.avg}<span className="text-xs text-muted-foreground ml-1">wpm</span></p>
+                                        </div>
+                                        <div className="bg-secondary/20 p-3 rounded-xl border border-white/5">
+                                            <p className="text-muted-foreground text-[9px] uppercase tracking-wider mb-1">Peak</p>
+                                            <p className="text-xl md:text-2xl font-mono font-bold text-primary">{speedStats.peak}<span className="text-xs text-muted-foreground ml-1">wpm</span></p>
+                                        </div>
+                                        <div className="bg-secondary/20 p-3 rounded-xl border border-white/5">
+                                            <p className="text-muted-foreground text-[9px] uppercase tracking-wider mb-1">Consistency</p>
+                                            <p className="text-xl md:text-2xl font-mono font-bold text-foreground">{speedStats.consistency}%</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <KeyHeatmap keystrokeData={stats.keystrokeData} />
+                            </div>
                         </div>
-                        <p className="text-[10px] text-white/20 font-medium">typespeakpro.com</p>
+
+                        {/* Footer / Branding */}
+                        <div className="flex justify-between items-center pt-3 border-t border-white/5 relative z-10 mt-1">
+                            <div className="flex items-center gap-2 text-white/20">
+                                <span className="text-[10px] font-mono">ID: {Math.random().toString(36).substr(2, 9).toUpperCase()}</span>
+                            </div>
+                            <p className="text-[10px] text-white/20 font-medium">typespeakpro.com</p>
+                        </div>
                     </div>
                 </div>
 
-                {/* Interaction Buttons - Fixed at bottom on small screens for easy access */}
-                <div className="sticky bottom-0 bg-background/80 backdrop-blur-xl md:bg-transparent md:backdrop-blur-none p-4 md:p-6 flex flex-wrap justify-center gap-2 md:gap-3 border-t items-center md:border-t-0 border-white/5">
+                {/* Interaction Buttons — pinned footer, always visible, never overlaps the content */}
+                <div className="flex-shrink-0 bg-background/80 backdrop-blur-xl md:bg-transparent md:backdrop-blur-none p-3 md:p-4 flex flex-wrap justify-center gap-2 md:gap-3 border-t items-center md:border-t-0 border-white/5">
                     <Button
                         variant="outline"
                         size="sm"
