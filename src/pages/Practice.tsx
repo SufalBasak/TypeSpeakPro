@@ -7,6 +7,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import LaptopSuggestionModal from '@/components/LaptopSuggestionModal';
 import RankedConfigModal from '@/components/typing/RankedConfigModal';
+import KeyboardShortcutsOverlay from '@/components/typing/KeyboardShortcutsOverlay';
 import { RoomConfig } from '@/hooks/useMultiplayer';
 
 const Practice = () => {
@@ -217,6 +218,8 @@ const Practice = () => {
                     setSelectedMode('ranked_race');
                 }}
             />
+
+            <KeyboardShortcutsOverlay />
         </div>
     );
 };

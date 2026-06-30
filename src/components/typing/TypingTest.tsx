@@ -482,6 +482,67 @@ const TypingTest = ({ onComplete, initialMultiplayer = false, aiMode = false, in
             e.preventDefault();
             resetTest();
         }
+
+        if (isFinished || isActive) return;
+
+        switch (e.key) {
+            case 'w':
+            case 'W':
+                setMode('words');
+                break;
+            case 's':
+            case 'S':
+                setMode('sentences');
+                break;
+            case 'p':
+            case 'P':
+                setMode('paragraphs');
+                break;
+            case '1':
+                setSelectedTime(15);
+                break;
+            case '2':
+                setSelectedTime(30);
+                break;
+            case '3':
+                setSelectedTime(60);
+                break;
+            case '4':
+                setSelectedTime(120);
+                break;
+            case 'n':
+            case 'N':
+                setIncludeNumbers(prev => !prev);
+                break;
+            case 'm':
+            case 'M':
+                setIncludePunctuation(prev => !prev);
+                break;
+            case 'e':
+            case 'E':
+                setDifficulty('easy');
+                break;
+            case 'd':
+            case 'D':
+                setDifficulty('medium');
+                break;
+            case 'r':
+            case 'R':
+                setDifficulty('hard');
+                break;
+            case 'h':
+            case 'H':
+                navigate('/');
+                break;
+            case 'g':
+            case 'G':
+                navigate('/dashboard');
+                break;
+            case 'l':
+            case 'L':
+                navigate('/leaderboard');
+                break;
+        }
     };
 
     // Calculate active character position for auto-scroll
