@@ -118,7 +118,6 @@ const TypingTest = ({ onComplete, initialMultiplayer = false, aiMode = false, in
         // Auto-start AI Matchmaking
         if (aiMode && 'startMatchmaking' in multiplayer) {
             // Cast to custom type or just call it safely, ts-ignore for now as intersection type complex
-            // @ts-ignore
             multiplayer.startMatchmaking();
         }
     }, [initialMultiplayer, aiMode]);
@@ -868,7 +867,6 @@ const TypingTest = ({ onComplete, initialMultiplayer = false, aiMode = false, in
             )}
 
             {/* AI Searching Overlay */}
-            {/* @ts-ignore - isSearching property specific to AI hook */}
             {multiplayer.isSearching && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm animate-in fade-in duration-300">
                     <div className="flex flex-col items-center gap-4">
