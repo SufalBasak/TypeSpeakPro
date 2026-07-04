@@ -7,6 +7,7 @@ const GlobalLoader = () => {
             className="min-h-screen bg-background flex flex-col items-center justify-center text-foreground p-4"
             aria-live="polite"
             role="status"
+            aria-busy="true"
         >
             <div className="flex flex-col items-center gap-4 animate-in fade-in zoom-in duration-500">
                 <div className="relative">

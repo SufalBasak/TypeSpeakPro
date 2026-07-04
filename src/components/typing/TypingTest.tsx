@@ -116,8 +116,7 @@ const TypingTest = ({ onComplete, initialMultiplayer = false, aiMode = false, in
         }
 
         // Auto-start AI Matchmaking
-        if (aiMode && 'startMatchmaking' in multiplayer) {
-            // Cast to custom type or just call it safely, ts-ignore for now as intersection type complex
+        if (aiMode && typeof multiplayer.startMatchmaking === 'function') {
             multiplayer.startMatchmaking();
         }
     }, [initialMultiplayer, aiMode]);
