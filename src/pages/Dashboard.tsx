@@ -2,13 +2,14 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { Activity, Zap, Keyboard, Trophy, Calendar, User, Mail, Shield, BookOpen, Mic, Brain } from "lucide-react";
+import { Activity, Zap, Keyboard, Trophy, Calendar, User, Mail, Shield, BookOpen, Mic, Brain, History } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import Navbar from "@/components/Navbar";
 import { supabase } from "@/lib/supabase";
 import { format, subDays, startOfDay, endOfDay } from 'date-fns';
 import { EmptyState, InlineError, SectionSkeleton } from '@/components/async';
 import { useRetryableAction } from '@/hooks/useRetryableAction';
+import { useSessionHistory } from '@/hooks/useSessionHistory';
 import { timeOperationDev, warnRepeatedDev } from '@/lib/perf-dev';
 import { aggregatePracticeRecords, aggregateTypingRecords, rankBestTypingRecords } from '@/lib/analytics';
 
@@ -16,8 +17,10 @@ const Dashboard = () => {
     const navigate = useNavigate();
     const { user } = useAuth();
     const fetchVersionRef = useRef(0);
+    const { history: localHistory } = useSessionHistory();
     const [fullHistory, setFullHistory] = useState<any[]>([]);
     const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+    const [showLocalHistory, setShowLocalHistory] = useState(false);
     const [stats, setStats] = useState({
         avgWpm: 0,
         avgAccuracy: 0,
@@ -37,6 +40,11 @@ const Dashboard = () => {
         if (!user?.id) return;
         warnRepeatedDev(`dashboard:${user.id}`, '[perf] repeated dashboard fetch');
         const fetchVersion = ++fetchVersionRef.current;
+
+        // Apply localStorage data as fallback when Supabase is empty or user is guest
+        const localTypingResults = localHistory
+            .filter(r => r.mode === 'words' || r.mode === 'sentences' || r.mode === 'paragraphs')
+            .map(r => ({ wpm: r.wpm, accuracy: r.accuracy, created_at: r.date }));
 
         // Fetch all results for the user for general stats
         const { data: allResults, error } = await supabase
@@ -60,7 +68,12 @@ const Dashboard = () => {
 
         if (fetchVersion !== fetchVersionRef.current) return;
 
-        const aggregateStats = timeOperationDev('dashboard.aggregate', 16, () => aggregateTypingRecords(allResults));
+        // Merge Supabase results with localStorage results
+        const mergedResults = allResults.length > 0
+            ? allResults
+            : localTypingResults;
+
+        const aggregateStats = timeOperationDev('dashboard.aggregate', 16, () => aggregateTypingRecords(mergedResults));
 
         setFullHistory(aggregateStats.records);
 
@@ -118,7 +131,7 @@ const Dashboard = () => {
 
         // 3. Recent Activity (Top 5)
         setRecentActivity(aggregateStats.records.slice(0, 5));
-    }, [user?.id]);
+    }, [user?.id, localHistory]);
 
     const dashboardAction = useRetryableAction(fetchDashboardData, {
         errorTitle: 'Dashboard could not load',
@@ -317,6 +330,81 @@ const Dashboard = () => {
                         </CardHeader>
                     </Card>
                 </div>
+                )}
+
+                {/* Local History Card (visible when localStorage has data) */}
+                {localHistory.length > 0 && (
+                    <Card className="bg-card border-border backdrop-blur-sm hover:bg-muted transition-all duration-300 group cursor-pointer"
+                        onClick={() => setShowLocalHistory(true)}
+                        onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') setShowLocalHistory(true); }}
+                        role="button" tabIndex={0}
+                    >
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium text-muted-foreground group-hover:text-teal-400 transition-colors">
+                                Local History
+                            </CardTitle>
+                            <History className="h-4 w-4 text-teal-500" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold text-foreground">{localHistory.length}</div>
+                            <p className="text-xs text-muted-foreground mt-1">Saved sessions</p>
+                            <p className="text-xs text-teal-400 mt-1">Best: {Math.max(...localHistory.map(r => r.wpm))} WPM</p>
+                        </CardContent>
+                    </Card>
+                )}
+
+                {/* Local History Modal */}
+                {showLocalHistory && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
+                        <div className="bg-card border border-border rounded-xl w-full max-w-4xl max-h-[80vh] flex flex-col shadow-2xl animate-in zoom-in-95 duration-300">
+                            <div className="p-6 border-b border-border flex items-center justify-between">
+                                <div>
+                                    <h2 className="text-2xl font-bold text-foreground">Local Typing History</h2>
+                                    <p className="text-sm text-muted-foreground">Sessions saved on this device.</p>
+                                </div>
+                                <button
+                                    onClick={() => setShowLocalHistory(false)}
+                                    className="p-2 hover:bg-muted rounded-full transition-colors text-muted-foreground hover:text-foreground"
+                                >
+                                    ✕
+                                </button>
+                            </div>
+                            <div className="flex-1 overflow-auto p-4 md:p-6 custom-scrollbar">
+                                <div className="rounded-lg border border-border overflow-hidden">
+                                    <table className="w-full text-sm text-left">
+                                        <thead className="bg-muted text-muted-foreground font-medium">
+                                            <tr>
+                                                <th className="px-4 py-3">Date</th>
+                                                <th className="px-4 py-3">Mode</th>
+                                                <th className="px-4 py-3">WPM</th>
+                                                <th className="px-4 py-3">Accuracy</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-border">
+                                            {localHistory.map((item, i) => (
+                                                <tr key={i} className="hover:bg-muted transition-colors">
+                                                    <td className="px-4 py-3 text-foreground">{format(new Date(item.date), 'MMM dd, yyyy HH:mm')}</td>
+                                                    <td className="px-4 py-3 capitalize text-foreground">
+                                                        <span className="px-2 py-0.5 rounded-full bg-muted border border-border text-xs">{item.mode || 'words'}</span>
+                                                    </td>
+                                                    <td className="px-4 py-3 font-bold text-teal-400">{item.wpm}</td>
+                                                    <td className="px-4 py-3 font-bold text-purple-400">{item.accuracy}%</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div className="p-4 border-t border-border flex justify-end">
+                                <button
+                                    onClick={() => setShowLocalHistory(false)}
+                                    className="px-4 py-2 bg-muted hover:bg-muted/80 text-foreground rounded-lg transition-colors text-sm font-medium"
+                                >
+                                    Close
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 )}
 
                 {/* Charts Section */}
