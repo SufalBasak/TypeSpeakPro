@@ -54,7 +54,7 @@ const SummaryReport: React.FC<SummaryReportProps> = ({ onRestart, onHome }) => {
     const weakAreas = scoreEntries.filter(([, score]) => score < 6).map(([key]) => key);
 
     const overallScore = (avgScores.grammar + avgScores.fluency + avgScores.confidence + avgScores.relevance) / 4;
-    const duration = Math.round((new Date().getTime() - session.startTime.getTime()) / 60000);
+    const duration = Math.round((Date.now() - session.startTime.getTime()) / 60000);
 
     return {
       totalQuestions,
@@ -174,7 +174,7 @@ const SummaryReport: React.FC<SummaryReportProps> = ({ onRestart, onHome }) => {
             </h3>
             {summary.strongAreas.length > 0 ? (
               <ul className="space-y-2">
-                {summary.strongAreas.map((area) => (
+                {summary.(strongAreas ?? []).map((area) => (
                   <li key={area} className="flex items-center gap-2 text-muted-foreground">
                     <span className="w-2 h-2 rounded-full bg-success" />
                     {formatSkillName(area)}
@@ -194,7 +194,7 @@ const SummaryReport: React.FC<SummaryReportProps> = ({ onRestart, onHome }) => {
             </h3>
             {summary.weakAreas.length > 0 ? (
               <ul className="space-y-2">
-                {summary.weakAreas.map((area) => (
+                {summary.(weakAreas ?? []).map((area) => (
                   <li key={area} className="flex items-center gap-2 text-muted-foreground">
                     <span className="w-2 h-2 rounded-full bg-warning" />
                     {formatSkillName(area)}
