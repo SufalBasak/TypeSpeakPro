@@ -88,7 +88,7 @@ const Navbar = ({ forceOpaque = false }: NavbarProps) => {
 
         {/* Desktop Navigation */}
         <div className="hidden lg:flex items-center gap-0.5">
-          {navLinks.map((link) => (
+          {(navLinks ?? []).map((link) => (
             <a
               key={link.href}
               href={link.href}
