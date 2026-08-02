@@ -174,7 +174,7 @@ const SummaryReport: React.FC<SummaryReportProps> = ({ onRestart, onHome }) => {
             </h3>
             {summary.strongAreas.length > 0 ? (
               <ul className="space-y-2">
-                {summary.strongAreas.map((area) => (
+                {summary.(strongAreas ?? []).map((area) => (
                   <li key={area} className="flex items-center gap-2 text-muted-foreground">
                     <span className="w-2 h-2 rounded-full bg-success" />
                     {formatSkillName(area)}
