@@ -178,7 +178,7 @@ export const useSpeech = (language: string = 'en-US'): UseSpeechReturn => {
             return;
         }
 
-        if (!text || text.trim() === '') return;
+        if (!text || text.trim().length === 0) return;
 
         // Cancel any current speech
         window.speechSynthesis.cancel();
