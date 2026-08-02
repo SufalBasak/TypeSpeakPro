@@ -4,7 +4,7 @@ const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 function isValidUrl(url: string | undefined): url is string {
-    if (!url || url.trim() === '' || url.toLowerCase().includes('placeholder')) return false;
+    if (!url || url.trim().length === 0 || url.toLowerCase().includes('placeholder')) return false;
     try {
         new URL(url);
         return true;
