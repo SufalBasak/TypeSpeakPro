@@ -13,7 +13,7 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ name, src, className = "w-10 h-
 
     // Generate a consistent color based on the name
     const getInitials = (name?: string) => {
-        return name?.charAt(0).toUpperCase() || '?';
+        return name?[0].toUpperCase() || '?';
     };
 
     const colors = [

@@ -129,7 +129,7 @@ const Navbar = ({ forceOpaque = false }: NavbarProps) => {
                     <img src={user.picture} alt={user.name} className="h-full w-full object-cover" />
                   ) : (
                     <div className="h-full w-full bg-gradient-to-br from-teal-500 to-purple-600 flex items-center justify-center text-white font-medium text-sm">
-                      {user?.name?.charAt(0).toUpperCase() || <User className="h-4 w-4" />}
+                      {user?.name?[0].toUpperCase() || <User className="h-4 w-4" />}
                     </div>
                   )}
                 </button>
