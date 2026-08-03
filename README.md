@@ -95,6 +95,7 @@ Want to run this innovation locally?
     ```bash
     npm run dev
     ```
+    > **Note:** Make sure Node.js and npm are installed and available in your system PATH before running this command.
 
 ---
 
