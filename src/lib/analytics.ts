@@ -44,7 +44,7 @@ export const calculatePercent = (value: number, total: number) => {
 };
 
 export const sanitizeMetricRecord = <T extends MetricRecord>(record: T): T | null => {
-  const wpm = record.wpm == null ? undefined : roundMetric(Number(record.wpm));
+  const wpm = record.wpm === null ? undefined : roundMetric(Number(record.wpm));
   const rawAccuracy = record.accuracy == null ? undefined : Number(record.accuracy);
   const accuracy = rawAccuracy == null ? undefined : roundMetric(rawAccuracy);
   const score = record.score == null ? undefined : roundMetric(Number(record.score));
