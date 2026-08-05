@@ -460,7 +460,7 @@ const TypingTest = ({ onComplete, initialMultiplayer = false, aiMode = false, in
 
         // Record keystroke latency for the newly typed character
         if (value.length > userInput.length) {
-            const typedChar = value[value.length - 1];
+            const typedChar = value.at(-1);
             const latency = lastKeystrokeTime.current ? now - lastKeystrokeTime.current : 0;
             const expectedChar = targetText[value.length - 1];
             keystrokeData.current.push({
