@@ -92,18 +92,20 @@ const TypingTest = ({ onComplete, initialMultiplayer = false, aiMode = false, in
     const keystrokeData = useRef<{ key: string; latency: number; isError: boolean }[]>([]);
     const lastKeystrokeTime = useRef<number | null>(null);
     const wpmRef = useRef(0);
+    const isCancelledRef = useRef(false);
     const mutationLockRef = useRef(createMutationLock());
     const sessionIdRef = useRef<string>(createAnalyticsSessionId());
 
-    // Automatically open multiplayer modal if prop passed OR if URL has ?room=
     // Automatically open multiplayer modal if prop passed OR if URL has ?room=
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
         const roomCodeParam = params.get('room');
 
+        let timer: ReturnType<typeof setTimeout> | undefined;
+
         if (initialMultiplayer || roomCodeParam) {
             // Short delay to ensure Radix Dialog can attach to DOM properly on fresh mount
-            setTimeout(() => {
+            timer = setTimeout(() => {
                 setIsMultiplayerOpen(true);
             }, 100);
 
@@ -121,6 +123,10 @@ const TypingTest = ({ onComplete, initialMultiplayer = false, aiMode = false, in
             // @ts-ignore
             multiplayer.startMatchmaking();
         }
+
+        return () => {
+            if (timer) clearTimeout(timer);
+        };
     }, [initialMultiplayer, aiMode]);
 
     // Update Room Config when Host changes settings
@@ -181,6 +187,13 @@ const TypingTest = ({ onComplete, initialMultiplayer = false, aiMode = false, in
         }
     }, [multiplayer.gameState]);
 
+    // Cleanup on unmount
+    useEffect(() => {
+        return () => {
+            isCancelledRef.current = true;
+        };
+    }, []);
+
     // Initialize test
     useEffect(() => {
         resetTest();
@@ -225,6 +238,8 @@ const TypingTest = ({ onComplete, initialMultiplayer = false, aiMode = false, in
     };
 
     const handleComplete = useCallback(() => {
+        if (isCancelledRef.current) return;
+
         const completionLock = mutationLockRef.current.acquire('typing:complete', 30000);
         if (!completionLock.acquired) return;
 
@@ -346,6 +361,9 @@ const TypingTest = ({ onComplete, initialMultiplayer = false, aiMode = false, in
             });
         }
 
+        // Guard against unmounted component
+        if (isCancelledRef.current) return;
+
         // Save to Supabase if user is logged in
         console.log("EndTest called. User:", user);
 
@@ -366,6 +384,8 @@ const TypingTest = ({ onComplete, initialMultiplayer = false, aiMode = false, in
             });
 
             try {
+                if (isCancelledRef.current) return;
+
                 const { data, error } = await supabase
                     .from('test_results')
                     .insert({
@@ -378,6 +398,8 @@ const TypingTest = ({ onComplete, initialMultiplayer = false, aiMode = false, in
                     })
                     .select();
 
+                if (isCancelledRef.current) return;
+
                 if (error) {
                     console.error("Supabase SAVE ERROR:", error);
                 } else {
@@ -386,6 +408,8 @@ const TypingTest = ({ onComplete, initialMultiplayer = false, aiMode = false, in
 
                     // Save to localStorage as well for instant local access
                     saveResult({ wpm: finalRecord.wpm ?? 0, accuracy: finalRecord.accuracy ?? 100, mode, sessionId: sessionIdRef.current });
+
+                    if (isCancelledRef.current) return;
 
                     // Save char-level analytics for adaptive coach (best-effort, silent fail)
                     if (Object.keys(charErrorsRef.current).length > 0) {
@@ -491,7 +515,7 @@ const TypingTest = ({ onComplete, initialMultiplayer = false, aiMode = false, in
     useLayoutEffect(() => {
         setActiveCharIndex(userInput.length);
 
-        requestAnimationFrame(() => {
+        const rafId = requestAnimationFrame(() => {
             if (activeCharRef.current && containerRef.current) {
                 const container = containerRef.current;
                 const activeChar = activeCharRef.current;
@@ -511,6 +535,8 @@ const TypingTest = ({ onComplete, initialMultiplayer = false, aiMode = false, in
                 });
             }
         });
+
+        return () => cancelAnimationFrame(rafId);
     }, [userInput]);
 
     // Render text with specific coloring
